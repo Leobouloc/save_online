@@ -22,6 +22,8 @@ column_names_to_keep = ['code_dept', 'code_comm', 'nom_commune', 'cat_rev_fisc',
                         'rev_fisc_de_ref_des_foy_fisc_imposables', 'tr_et_sal_nb_foy_concernes',
                         'tr_et_sal_montant', 'retr_et_pens_nb_foy_concernes', 'retr_et_pens_montant']
 
+print 'test'
+
 #table = pd.DataFrame(columns = column_names)
 #
 #for i in range(0,150):
