@@ -10,7 +10,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-path = 'C:\\Users\\work\\Documents\\ETALAB_data'
+path = '/home/debian/Documents/data/'
 
 column_names = ['departement', 'code_commune', 'nom', 'revenu_par_tranche',
                 'nb_de_foyers', 'revenu_fiscal_de_ref_des_foyers', 'impot_total', 'nb_de_foyers_imposables', 
@@ -29,18 +29,17 @@ print 'test'
 #for i in range(0,150):
 #    print i
 #    try:
+
 #        print i
-#        test = pd.read_excel(os.path.join(path, 'revenu_par_ville.xls'), i, skiprows = 23)
+#        test = pd.read_excel(os.path.join(path, 'IRCOM_2012.xls'), i, skiprows = 23)
 #        test = test.iloc[:,1:]
 #        test.columns = column_names
 #        table =  table.append(test, ignore_index = True)
 #    except:
 #        pass
     
-try:
-    villes
-except:
-    file = os.path.join(path, 'info_villes.csv' )  
+def load_info_villes(path):
+    file = os.path.join(path, 'villes', 'info_villes.csv' )  
     villes = pd.read_csv(file, sep = ';')
     
     villes.columns = [u'insee_code', u'postal_code', u'nom_comm', u'nom_dept',
@@ -48,12 +47,31 @@ except:
                       u'population', u'geo_point_2d', u'geo_shape',
                       u'id_geofla', u'code_comm', u'code_cant', u'code_arr', 
                       u'code_dept', u'code_reg']
-
-try:
-    tab
-except:
-    file = os.path.join(path, 'impots_par_commune_2012.csv' )  
+    return villes
+ 
+ 
+def load_impots(path):
+    file = os.path.join(path, 'villes', 'impots_par_commune_2012.csv' )
     tab = pd.read_csv(file, sep = ';')
+    tab.columns = column_names_to_keep
+    return tab
+    
+
+def load_population(path):
+    file = os.path.join(path, 'villes', 'population_historique.csv')
+    population = pd.read_csv(file, sep = ';')
+    
+    def _int(x):
+        try:
+            return np.int64(x)
+        except:
+            return x
+    
+    population['code_comm'] = population['DEPCOM'].apply(lambda x: x[2:]).apply(_int)
+    population['code_dept'] = population['DEPCOM'].apply(lambda x: x[:2]).apply(str)
+    population['accrois_pop'] = (population['PMUN11'] - population['PSDC90'])/population['PSDC90']
+    return population
+
 
 #pres_2012_1_sel = [u'Code du département', u'Libellé de la commune','Code de la commune', 'Inscrits', 'Abstentions', 'Blancs et nuls', 'Voix', 'Voix.1', 'Voix.2', 'Voix.3', 'Voix.7', 'Voix.9' ]
 #pres_2012_1_col = ['dep', 'nom_comm', 'code_comm', 'inscrits', 'abst', 'blcs_nuls', 'joly', 'lepen', 'sarkozy', 'melenchon', 'bayrou', 'hollande']
@@ -61,32 +79,36 @@ except:
 #pres_2012_2_sel = [u'Code du département', u'Libellé de la commune','Code de la commune', 'Inscrits', 'Abstentions', 'Blancs et nuls', 'Voix', 'Voix.1']
 #pres_2012_2_col = ['dep', 'nom_comm', 'code_comm', 'inscrits', 'abst', 'blcs_nuls', 'hollande', 'sarkozy']
 
-try:
-    elections
-except:
-    annees = ['2002', '2007', '2012']
+def load_elections(path):
+    annees = ['2007', '2012']
     elections = pd.DataFrame(columns = ['dep', 'nom_comm', 'code_comm'])
     for annee in annees:
         for tour in [1,2]:
             prefix = annee + '_' + str(tour) + '_'
             print prefix
             file_name = 'elections_pres_' + annee + '.xls'
-            file = os.path.join(path, file_name)
-            table = pd.read_excel(file, tour-1)
+            file = os.path.join(path, 'elections', file_name)
+            table = pd.read_excel(file, tour-1) 
+            
+
+            
             range_length = (len(table.columns)-15) // 6
             pres_sel = [u'Code du département', u'Libellé de la commune','Code de la commune', 'Inscrits', 'Abstentions', 'Blancs et nuls', 'Voix'] + ['Voix.' + str(n) for n in range(1, range_length)]
             pres_col = ['dep', 'nom_comm', 'code_comm', prefix + 'inscrits', prefix + 'abst', prefix + 'invalides'] + [prefix + (table['Nom'].iloc[0]).lower()] + [prefix + (table['Nom.' + str(n)].iloc[0]).lower() for n in range(1, range_length)]
+            pres_col = [col.replace(' ', '_') for col in pres_col]
+            pres_col = [col.replace('\xc3\xa9', 'e') for col in pres_col]            
             table = table[pres_sel]
             table.columns = pres_col
             elections = elections.merge(table, how = 'outer', on = ['dep', 'nom_comm', 'code_comm'])
     elections.dep = elections.dep.apply(str)
+    return elections
             
 ####################
 _2002_1_extr_gauche = ['2002_1_gluckstein', '2002_1_hue', '2002_1_laguiller', '2002_1_besancenot']     
 _2002_1_gauche = ['2002_1_taubira', '2002_1_mamere', '2002_1_jospin']
 _2002_1_centre = ['2002_1_lepage', '2002_1_bayrou', '2002_1_chevenement']
 _2002_1_droite = ['2002_1_chirac', '2002_1_saint-josse', '2002_1_boutin', '2002_1_madelin'] 
-_2002_1_extr_droite = ['2002_1_megret', '2002_1_le pen']
+_2002_1_extr_droite = ['2002_1_megret', '2002_1_le_pen']
 
 _2002_1_verts = '2002_1_mamere'
 _2002_1_soc = '2002_1_jospin'
@@ -97,11 +119,11 @@ _2002_1_droite_large = _2002_1_centre + _2002_1_droite + _2002_1_extr_droite
 ####################
 
 ####################
-_2007_1_extr_gauche = ['2007_1_besancenot', '2007_1_buffet', u'2007_1_bové', '2007_1_laguiller']     
+_2007_1_extr_gauche = ['2007_1_besancenot', '2007_1_buffet', u'2007_1_bove', '2007_1_laguiller']     
 _2007_1_gauche = ['2007_1_schivardi', '2007_1_voynet', '2007_1_royal', ]
 _2007_1_centre = ['2007_1_bayrou']
-_2007_1_droite = [u'2007_1_de villiers', '2007_1_nihous', '2007_1_sarkozy'] 
-_2007_1_extr_droite = ['2007_1_le pen']
+_2007_1_droite = [u'2007_1_de_villiers', '2007_1_nihous', '2007_1_sarkozy'] 
+_2007_1_extr_droite = ['2007_1_le_pen']
 
 _2007_1_verts = '2007_1_voynet'
 _2007_1_soc = '2007_1_royal'
@@ -112,11 +134,11 @@ _2007_1_droite_large = _2007_1_centre + _2007_1_droite + _2007_1_extr_droite
 ####################
 
 ####################
-_2012_1_extr_gauche = [u'2012_1_mélenchon', '2012_1_poutou', '2012_1_arthaud']     
+_2012_1_extr_gauche = [u'2012_1_melenchon', '2012_1_poutou', '2012_1_arthaud']     
 _2012_1_gauche = ['2012_1_joly', '2012_1_cheminade', '2012_1_hollande']
 _2012_1_centre = ['2012_1_bayrou']
 _2012_1_droite = ['2012_1_sarkozy']
-_2012_1_extr_droite = ['2012_1_le pen', '2012_1_dupont-aignan']
+_2012_1_extr_droite = ['2012_1_le_pen', '2012_1_dupont-aignan']
 
 _2012_1_verts = '2012_1_joly'
 _2012_1_soc = '2012_1_hollande'
@@ -130,6 +152,11 @@ dict  = {'_2002_1_gauche_large' : _2002_1_gauche_large, '_2002_1_droite_large' :
          '_2007_1_gauche_large':_2007_1_gauche_large, '_2007_1_droite_large': _2007_1_droite_large,
          '_2012_1_gauche_large': _2012_1_gauche_large, '_2012_1_droite_large':_2012_1_droite_large}
 
+def elections_prop_maker(table, candidat):
+    '''candidat peut prendre par exemple 2007_1_sarkozy'''
+    inscrits = table[candidat[:7] + 'inscrits']
+    abst = table[candidat[:7] + 'abst']
+    return table[candidat] / (inscrits - abst)
 
 def variabilite(table):
     for annee in annees:
@@ -182,11 +209,7 @@ def variabilite(table):
 #        
 #tab['departement'] = tab['departement'].apply(rewrite_departement_lambda)
 
-try:
-    villes
-except: 
-    tab.columns = column_names_to_keep
-    
+def villes_merge(villes, tab, elections, population):
     tab_small = tab[tab['cat_rev_fisc'] == 'Total']
     tab_small.drop('cat_rev_fisc', axis = 1, inplace = True)
     
@@ -204,6 +227,7 @@ except:
     # Test cont
     villes = pd.merge(tab_small, villes[['insee_code', 'code_comm', 'code_dept', 'postal_code','nom_comm','population', 'superficie']], on = ['code_comm', 'code_dept'], how = 'left')
     villes = villes.merge(elections, how = 'left', left_on = ['code_comm', 'code_dept'], right_on = ['code_comm', 'dep'])
+    villes = villes.merge(population, on = ['code_comm', 'code_dept'], how = 'outer')   
     
     ### Metriques
     villes['population'] *= 1000
@@ -216,7 +240,9 @@ except:
     
     villes['hollande_2_2012_prop'] = villes['2012_2_hollande'] / (villes['2012_2_hollande'] + villes['2012_2_sarkozy'])
 
-
+    villes['code_comm'] = villes.code_comm.apply(str).apply(lambda x: x.zfill(3))
+    villes['code_dept'] = villes.code_dept.apply(str).apply(lambda x: x.zfill(2))
+    return villes
 
 
 
@@ -298,6 +324,26 @@ def minifunc(x):
         return minifunc(10 * x) / float(10)
     else :
         return minifunc(x / 10) * 10
+
+
+try:
+    villes
+except:
+    villes = load_info_villes(path)
+try:
+    tab
+except:
+    tab = load_impots(path)
+try:
+    elections
+except:
+    elections = load_elections(path)
+try:
+    population
+except:
+    population = load_population(path)
+    
+tout = villes_merge(villes, tab, elections, population)
     
 
 #villes['quart_vote'] = villes['voix_sarkozy'].apply(lambda_vote)
