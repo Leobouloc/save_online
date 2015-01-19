@@ -196,18 +196,10 @@ def lambda_mot(table_des_mots, ligne):
     return table_des_mots
 
 '''Création d'un lexique pour classer les descriptions dans marché'''
+#table_des_mots = pd.DataFrame(columns = ['Travaux', 'Services', 'Fournitures'])
+#attract.apply(lambda ligne: lambda_mot(table_des_mots, ligne), axis = 1)
+table_des_freq_mots = table_des_mots / table_des_mots.sum()
 
-
-
-try:
-    file = os.path.join(path, 'table_des_mots.csv')
-    table_des_mots = pd.load_csv(file)
-except:
-    table_des_mots = pd.DataFrame(columns = ['Travaux', 'Services', 'Fournitures'])
-    attract.apply(lambda ligne: lambda_mot(table_des_mots, ligne), axis = 1)
-    table_des_freq_mots = table_des_mots / table_des_mots.sum()
-    file = os.path.join(path, 'table_des_mots.csv')
-    table_des_mots.to_csv(file, sep = ';')
 
 
 def caract_phrase(table_des_freq_mots, ligne):
@@ -238,7 +230,7 @@ def caract_phrase(table_des_freq_mots, ligne):
         ligne['type_calcule'] = "Fournitures"
     return ligne
 
-#marches = marches.apply(lambda x: caract_phrase(table_des_freq_mots, x), axis = 1)
+marches = marches.apply(lambda x: caract_phrase(table_des_freq_mots, x), axis = 1)
 
 def pop_from_ville(table_ville):
     '''FAUX8FAUX8FAUX'''
@@ -269,6 +261,7 @@ test['is_in_cus'] = test['cp'].apply(lambda x: x in cus_code_postal)
 word = 'amiante' # Has to be lower case
 def ret_sel(word):
     return marches['objet_1'].apply(lambda x: word in x.lower()) | marches['objet_2'].apply(lambda x: word in str(x).lower())
+
 
 
 

@@ -10,8 +10,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-from random_forest import entropy
-
 path = 'C:\\Users\\work\\Documents\\ETALAB_data'
 
 column_names = ['departement', 'code_commune', 'nom', 'revenu_par_tranche',
@@ -24,150 +22,114 @@ column_names_to_keep = ['code_dept', 'code_comm', 'nom_commune', 'cat_rev_fisc',
                         'rev_fisc_de_ref_des_foy_fisc_imposables', 'tr_et_sal_nb_foy_concernes',
                         'tr_et_sal_montant', 'retr_et_pens_nb_foy_concernes', 'retr_et_pens_montant']
 
-annees = ['2002', '2007', '2012']
-
-def load_info_villes(path):
-    try:
-        villes
-    except:
-        file = os.path.join(path, 'info_villes.csv' )  
-        villes = pd.read_csv(file, sep = ';')
-        
-        villes.columns = [u'insee_code', u'postal_code', u'nom_comm', u'nom_dept',
-                          u'nom_region', u'statut', u'z_moyen', u'superficie', 
-                          u'population', u'geo_point_2d', u'geo_shape',
-                          u'id_geofla', u'code_comm', u'code_cant', u'code_arr', 
-                          u'code_dept', u'code_reg']
-        villes['code_comm'] = villes['code_comm'].apply(lambda x: int(x))
-        villes['population'] *= 1000
-    return villes
-
-
-def load_impots(path):
-    try:
-        impots
-    except:
-        file = os.path.join(path, 'impots_par_commune_2012.csv' )  
-        impots = pd.read_csv(file, sep = ';')
-        impots.columns = column_names_to_keep
-        impots['code_comm'] = impots['code_comm'].apply(lambda x: int(x))
-    return impots
-
-def weighted_avg_and_std(values, weights):
-    """
-    Return the weighted average and standard deviation.
-
-    values, weights -- Numpy ndarrays with the same shape.
-    """
-    average = np.average(values, weights=weights)
-    variance = np.average((values-average)**2, weights=weights)  # Fast and numerically precise
-    return math.sqrt(variance)
-
-
-def entropie_sociale(impots):
-    print 'Actuellement dans entropie sociale'
-#    from random_forest import entropy
-    impots['rev_moy'] = impots.rev_fisc_de_ref_des_foy_fisc / impots.nb_foy_fisc
-    selector = impots['cat_rev_fisc'] != 'Total'
-    entropie_tab = impots[selector].groupby(['code_comm', 'code_dept']).apply(lambda x: weighted_avg_and_std(x['rev_moy'], x['nb_foy_fisc'])).reset_index()
-    entropie_tab.columns = ['code_comm', 'code_dept', 'entropie']
-    impots = impots.merge(entropie_tab, how = 'outer', on = ['code_comm', 'code_dept'])
-    entropie_tab.loc[entropie_tab['entropie'].isnull(), 'entropie_sociale'] = 0
-    return impots
-
+#table = pd.DataFrame(columns = column_names)
+#
+#for i in range(0,150):
+#    print i
+#    try:
+#        print i
+#        test = pd.read_excel(os.path.join(path, 'revenu_par_ville.xls'), i, skiprows = 23)
+#        test = test.iloc[:,1:]
+#        test.columns = column_names
+#        table =  table.append(test, ignore_index = True)
+#    except:
+#        pass
     
-def load_impots_aggrege(path):
-    try:
-        impots_aggrege
-    except:
-        # TODO: Indicateur d'inegalites
-        impots = load_impots(path)
-        impots = entropie_sociale(impots)
-        impots_aggrege = impots[impots['cat_rev_fisc'] == 'Total']
-        impots_aggrege = impots_aggrege.drop('cat_rev_fisc', axis = 1)
-    return impots_aggrege
+try:
+    villes
+except:
+    file = os.path.join(path, 'info_villes.csv' )  
+    villes = pd.read_csv(file, sep = ';')
+    
+    villes.columns = [u'insee_code', u'postal_code', u'nom_comm', u'nom_dept',
+                      u'nom_region', u'statut', u'z_moyen', u'superficie', 
+                      u'population', u'geo_point_2d', u'geo_shape',
+                      u'id_geofla', u'code_comm', u'code_cant', u'code_arr', 
+                      u'code_dept', u'code_reg']
+
+try:
+    tab
+except:
+    file = os.path.join(path, 'impots_par_commune_2012.csv' )  
+    tab = pd.read_csv(file, sep = ';')
+
+#pres_2012_1_sel = [u'Code du département', u'Libellé de la commune','Code de la commune', 'Inscrits', 'Abstentions', 'Blancs et nuls', 'Voix', 'Voix.1', 'Voix.2', 'Voix.3', 'Voix.7', 'Voix.9' ]
+#pres_2012_1_col = ['dep', 'nom_comm', 'code_comm', 'inscrits', 'abst', 'blcs_nuls', 'joly', 'lepen', 'sarkozy', 'melenchon', 'bayrou', 'hollande']
+#
+#pres_2012_2_sel = [u'Code du département', u'Libellé de la commune','Code de la commune', 'Inscrits', 'Abstentions', 'Blancs et nuls', 'Voix', 'Voix.1']
+#pres_2012_2_col = ['dep', 'nom_comm', 'code_comm', 'inscrits', 'abst', 'blcs_nuls', 'hollande', 'sarkozy']
+
+try:
+    elections
+except:
+    annees = ['2002', '2007', '2012']
+    elections = pd.DataFrame(columns = ['dep', 'nom_comm', 'code_comm'])
+    for annee in annees:
+        for tour in [1,2]:
+            prefix = annee + '_' + str(tour) + '_'
+            print prefix
+            file_name = 'elections_pres_' + annee + '.xls'
+            file = os.path.join(path, file_name)
+            table = pd.read_excel(file, tour-1)
+            range_length = (len(table.columns)-15) // 6
+            pres_sel = [u'Code du département', u'Libellé de la commune','Code de la commune', 'Inscrits', 'Abstentions', 'Blancs et nuls', 'Voix'] + ['Voix.' + str(n) for n in range(1, range_length)]
+            pres_col = ['dep', 'nom_comm', 'code_comm', prefix + 'inscrits', prefix + 'abst', prefix + 'invalides'] + [prefix + (table['Nom'].iloc[0]).lower()] + [prefix + (table['Nom.' + str(n)].iloc[0]).lower() for n in range(1, range_length)]
+            table = table[pres_sel]
+            table.columns = pres_col
+            elections = elections.merge(table, how = 'outer', on = ['dep', 'nom_comm', 'code_comm'])
+    elections.dep = elections.dep.apply(str)
+            
+####################
+_2002_1_extr_gauche = ['2002_1_gluckstein', '2002_1_hue', '2002_1_laguiller', '2002_1_besancenot']     
+_2002_1_gauche = ['2002_1_taubira', '2002_1_mamere', '2002_1_jospin']
+_2002_1_centre = ['2002_1_lepage', '2002_1_bayrou', '2002_1_chevenement']
+_2002_1_droite = ['2002_1_chirac', '2002_1_saint-josse', '2002_1_boutin', '2002_1_madelin'] 
+_2002_1_extr_droite = ['2002_1_megret', '2002_1_le pen']
+
+_2002_1_verts = '2002_1_mamere'
+_2002_1_soc = '2002_1_jospin'
+_2002_1_rpr = '2002_1_chirac'
+
+_2002_1_gauche_large = _2002_1_extr_gauche + _2002_1_gauche
+_2002_1_droite_large = _2002_1_centre + _2002_1_droite + _2002_1_extr_droite
+####################
+
+####################
+_2007_1_extr_gauche = ['2007_1_besancenot', '2007_1_buffet', u'2007_1_bové', '2007_1_laguiller']     
+_2007_1_gauche = ['2007_1_schivardi', '2007_1_voynet', '2007_1_royal', ]
+_2007_1_centre = ['2007_1_bayrou']
+_2007_1_droite = [u'2007_1_de villiers', '2007_1_nihous', '2007_1_sarkozy'] 
+_2007_1_extr_droite = ['2007_1_le pen']
+
+_2007_1_verts = '2007_1_voynet'
+_2007_1_soc = '2007_1_royal'
+_2007_1_rpr = '2007_1_sarkozy'
+
+_2007_1_gauche_large = _2007_1_extr_gauche + _2007_1_gauche
+_2007_1_droite_large = _2007_1_centre + _2007_1_droite + _2007_1_extr_droite
+####################
+
+####################
+_2012_1_extr_gauche = [u'2012_1_mélenchon', '2012_1_poutou', '2012_1_arthaud']     
+_2012_1_gauche = ['2012_1_joly', '2012_1_cheminade', '2012_1_hollande']
+_2012_1_centre = ['2012_1_bayrou']
+_2012_1_droite = ['2012_1_sarkozy']
+_2012_1_extr_droite = ['2012_1_le pen', '2012_1_dupont-aignan']
+
+_2012_1_verts = '2012_1_joly'
+_2012_1_soc = '2012_1_hollande'
+_2012_1_rpr = '2012_1_sarkozy'
+
+_2012_1_gauche_large = _2012_1_extr_gauche + _2012_1_gauche
+_2012_1_droite_large = _2012_1_centre + _2012_1_droite + _2012_1_extr_droite
+####################
+
+dict  = {'_2002_1_gauche_large' : _2002_1_gauche_large, '_2002_1_droite_large' : _2002_1_droite_large,
+         '_2007_1_gauche_large':_2007_1_gauche_large, '_2007_1_droite_large': _2007_1_droite_large,
+         '_2012_1_gauche_large': _2012_1_gauche_large, '_2012_1_droite_large':_2012_1_droite_large}
 
 
-def load_elections(path, annees = annees, force = False):
-    '''Force = True will reload regardless of preexisting file'''
-    file_write = os.path.join(path, 'elections_csv.csv')
-    try:
-        assert not force
-        
-        elections = pd.read_csv(file_write, sep = ';')
-    except:
-        elections = pd.DataFrame(columns = ['code_dept', 'nom_comm', 'code_comm'])
-        for annee in annees:
-            for tour in [1,2]:
-                prefix = annee + '_' + str(tour) + '_'
-                print prefix
-                file_name = 'elections_pres_' + annee + '.xls'
-                file = os.path.join(path, file_name)
-                table = pd.read_excel(file, tour - 1)
-                range_length = (len(table.columns) - 15) // 6
-                pres_sel = [u'Code du département', u'Libellé de la commune','Code de la commune', 'Inscrits', 'Abstentions', 'Blancs et nuls', 'Voix'] + ['Voix.' + str(n) for n in range(1, range_length)]
-                pres_col = ['code_dept', 'nom_comm', 'code_comm', prefix + 'inscrits', prefix + 'abst', prefix + 'invalides'] + [prefix + (table['Nom'].iloc[0]).lower()] + [prefix + (table['Nom.' + str(n)].iloc[0]).lower() for n in range(1, range_length)]
-                table = table[pres_sel]
-                table.columns = pres_col
-                elections = elections.merge(table, how = 'left', on = ['code_dept', 'nom_comm', 'code_comm'])
-        elections.code_dept = elections.code_dept.apply(str)
-        elections.to_csv(file_write, sep = ';', index = False)
-    return elections
-
-
-def make_dict():
-    ####################
-    _2002_1_extr_gauche = ['2002_1_gluckstein', '2002_1_hue', '2002_1_laguiller', '2002_1_besancenot']     
-    _2002_1_gauche = ['2002_1_taubira', '2002_1_mamere', '2002_1_jospin']
-    _2002_1_centre = ['2002_1_lepage', '2002_1_bayrou', '2002_1_chevenement']
-    _2002_1_droite = ['2002_1_chirac', '2002_1_saint-josse', '2002_1_boutin', '2002_1_madelin'] 
-    _2002_1_extr_droite = ['2002_1_megret', '2002_1_le pen']
-    
-    _2002_1_verts = '2002_1_mamere'
-    _2002_1_soc = '2002_1_jospin'
-    _2002_1_rpr = '2002_1_chirac'
-    
-    _2002_1_gauche_large = _2002_1_extr_gauche + _2002_1_gauche
-    _2002_1_droite_large = _2002_1_centre + _2002_1_droite + _2002_1_extr_droite
-    ####################
-
-    ####################
-    _2007_1_extr_gauche = ['2007_1_besancenot', '2007_1_buffet', u'2007_1_bové', '2007_1_laguiller']     
-    _2007_1_gauche = ['2007_1_schivardi', '2007_1_voynet', '2007_1_royal', ]
-    _2007_1_centre = ['2007_1_bayrou']
-    _2007_1_droite = [u'2007_1_de villiers', '2007_1_nihous', '2007_1_sarkozy'] 
-    _2007_1_extr_droite = ['2007_1_le pen']
-    
-    _2007_1_verts = '2007_1_voynet'
-    _2007_1_soc = '2007_1_royal'
-    _2007_1_rpr = '2007_1_sarkozy'
-    
-    _2007_1_gauche_large = _2007_1_extr_gauche + _2007_1_gauche
-    _2007_1_droite_large = _2007_1_centre + _2007_1_droite + _2007_1_extr_droite
-    ####################
-    
-    ####################
-    _2012_1_extr_gauche = [u'2012_1_mélenchon', '2012_1_poutou', '2012_1_arthaud']     
-    _2012_1_gauche = ['2012_1_joly', '2012_1_cheminade', '2012_1_hollande']
-    _2012_1_centre = ['2012_1_bayrou']
-    _2012_1_droite = ['2012_1_sarkozy']
-    _2012_1_extr_droite = ['2012_1_le pen', '2012_1_dupont-aignan']
-    
-    _2012_1_verts = '2012_1_joly'
-    _2012_1_soc = '2012_1_hollande'
-    _2012_1_rpr = '2012_1_sarkozy'
-    
-    _2012_1_gauche_large = _2012_1_extr_gauche + _2012_1_gauche
-    _2012_1_droite_large = _2012_1_centre + _2012_1_droite + _2012_1_extr_droite
-    ####################
-    
-    dict  = {'_2002_1_gauche_large' : _2002_1_gauche_large, '_2002_1_droite_large' : _2002_1_droite_large,
-             '_2007_1_gauche_large':_2007_1_gauche_large, '_2007_1_droite_large': _2007_1_droite_large,
-             '_2012_1_gauche_large': _2012_1_gauche_large, '_2012_1_droite_large':_2012_1_droite_large}
-    
-    return dict
-
-def variabilite(table, dict, annees = annees):
+def variabilite(table):
     for annee in annees:
         string_gauche = '_' + str(annee) + '_1_gauche_large'
         string_droite = '_' + str(annee) + '_1_droite_large'
@@ -193,37 +155,68 @@ def variabilite(table, dict, annees = annees):
     return var
 
 
-def load_and_merge(path):
-    try:
-        villes_merge
-    except:
-        villes = load_info_villes(path)
-        elections = load_elections(path)
-        impots_aggrege = load_impots_aggrege(path)
-        
-        #impots_aggrege.to_csv(os.path.join(path, 'impots_par_commune_agrege.csv'), sep = ';', index = False)
-        #impots.to_csv(os.path.join(path, 'impots_par_commune.csv'), sep = ';', index = False)
-        
-        #impots_aggrege['code_commune'] =impots_aggrege['code_commune'].apply(lambda x: x.zfill(3)) 
-        #impots_aggrege['code_dept'] = impots_aggrege['code_dept'].apply(lambda x: x.zfill(2))
-        
-        # Test cont
-        villes_merge = pd.merge(impots_aggrege, villes[['insee_code', 'code_comm', 'code_dept', 'postal_code','nom_comm','population', 'superficie']], on = ['code_comm', 'code_dept'], how = 'left')
-        villes_merge = villes_merge.merge(elections, how = 'left', on = ['code_comm', 'code_dept'])
 
-    return villes_merge
 
-def metriques(table):
-        table['densite'] = table['population']/table['superficie']
-        table['nb_votants'] = table['2012_2_inscrits'] - table['2012_2_abst']
-        table['richesse'] = table['rev_fisc_de_ref_des_foy_fisc'] / table['nb_foy_fisc']
-        table['assistes'] = table['retr_et_pens_montant'] / table['rev_fisc_de_ref_des_foy_fisc']
-        
-        dict = make_dict()
-        table['variabilite'] = variabilite(table, dict)
-        table['hollande_2_2012_prop'] = table['2012_2_hollande'] / (table['2012_2_hollande'] + table['2012_2_sarkozy'])
-        table['lepen_2012_prop'] = table['2012_1_le pen'] / (table['2012_1_inscrits'] - table['2012_1_abst'])
-        return table
+
+#def lambda_vote(x):
+#    if x<43:
+#        return 0
+#    elif x<51:
+#        return 1
+#    elif x<59:
+#        return 2
+#    else:
+#        return 3
+
+
+#tab.replace('n.d.', np.nan, inplace = True)
+#
+#def rewrite_departement_lambda (x):
+#    if x in ['2A0', '2B0', '971', '972', '973', '974', 'B31']:
+#        return x
+#    else:
+#        x = int(x.split('.')[0])/10
+#        return(str(x))
+#        
+#tab['departement'] = tab['departement'].apply(rewrite_departement_lambda)
+
+try:
+    villes
+except: 
+    tab.columns = column_names_to_keep
+    
+    tab_small = tab[tab['cat_rev_fisc'] == 'Total']
+    tab_small.drop('cat_rev_fisc', axis = 1, inplace = True)
+    
+    #tab_small.to_csv(os.path.join(path, 'impots_par_commune_agrege.csv'), sep = ';', index = False)
+    #tab.to_csv(os.path.join(path, 'impots_par_commune.csv'), sep = ';', index = False)
+    
+    #tab_small['code_commune'] =tab_small['code_commune'].apply(lambda x: x.zfill(3)) 
+    #tab_small['dep'] = tab_small['dep'].apply(lambda x: x.zfill(2))
+    
+    tab_small['code_comm'] = tab_small['code_comm'].apply(lambda x: int(x))
+    villes['code_comm'] = villes['code_comm'].apply(lambda x: int(x))
+    
+    
+    
+    # Test cont
+    villes = pd.merge(tab_small, villes[['insee_code', 'code_comm', 'code_dept', 'postal_code','nom_comm','population', 'superficie']], on = ['code_comm', 'code_dept'], how = 'left')
+    villes = villes.merge(elections, how = 'left', left_on = ['code_comm', 'code_dept'], right_on = ['code_comm', 'dep'])
+    
+    ### Metriques
+    villes['population'] *= 1000
+    villes['densite'] = villes['population']/villes['superficie']
+    villes['nb_votants'] = villes['2012_2_inscrits'] - villes['2012_2_abst']
+    villes['richesse'] = villes['rev_fisc_de_ref_des_foy_fisc'] / villes['nb_foy_fisc']
+    villes['assistes'] = villes['retr_et_pens_montant'] / villes['rev_fisc_de_ref_des_foy_fisc']
+    
+    villes['variabilite'] = variabilite(villes)
+    
+    villes['hollande_2_2012_prop'] = villes['2012_2_hollande'] / (villes['2012_2_hollande'] + villes['2012_2_sarkozy'])
+
+
+
+
 
 
 def categorizer(table, sort_string = 'densite', cat_num = 10):
@@ -255,17 +248,6 @@ def categorizer(table, sort_string = 'densite', cat_num = 10):
 
 def heat_map(table, x_str = 'richesse', y_str = 'densite', z_str = 'variabilite', precision = 10):    
     assert z_str in table.columns
-    
-    def minifunc(x):
-        assert x>=0
-        if x == 0:
-            return 0
-        if (100 <= x)  and (x <1000):
-            return round(x)
-        elif x < 100:
-            return minifunc(10 * x) / float(10)
-        else :
-            return minifunc(x / 10) * 10    
     
     x_str_cat = x_str + '_cat'
     y_str_cat = y_str + '_cat'
@@ -304,8 +286,17 @@ def heat_map(table, x_str = 'richesse', y_str = 'densite', z_str = 'variabilite'
 #    ax.colorbar()
     plt.show()
 
-
-
+def minifunc(x):
+    assert x>=0
+    if x == 0:
+        return 0
+    if (100 <= x)  and (x <1000):
+        return round(x)
+    elif x < 100:
+        return minifunc(10 * x) / float(10)
+    else :
+        return minifunc(x / 10) * 10
+    
 
 #villes['quart_vote'] = villes['voix_sarkozy'].apply(lambda_vote)
 
@@ -323,3 +314,7 @@ def heat_map(table, x_str = 'richesse', y_str = 'densite', z_str = 'variabilite'
 #h['CODE_POSTAL'] = h['CODE_POSTAL'].apply(str)
 #
 #h = pd.merge(h, villes, left_on = 'CODE_POSTAL', right_index = True, how = 'left')
+
+
+
+
