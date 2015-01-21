@@ -73,9 +73,15 @@ class ClusterProblem(object):
     def new_distance_matrix(self, coord_x, coord_y):
         '''Cree la nouvelle_matrice des distances'''
         distance_matrix = self.distance_matrix.copy()
+<<<<<<< HEAD
 #        assert all([distance_matrix.iloc[i, i] == inf for i in range(len(distance_matrix))])
         if distance_param == 'mean':
             new_dist = distance_matrix.apply(lambda x: (x[coord_x] + x[coord_y])/2.0)
+=======
+        assert all([distance_matrix.iloc[i, i] == inf for i in range(len(distance_matrix))])
+        if distance_param == 'max':
+            new_dist = distance_matrix.apply(lambda x: max(x[coord_x], x[coord_y]))
+>>>>>>> b56d4e0d6cd4e41294ea5764d80bb868dd0192a4
         elif distance_param == 'min':
             new_dist = distance_matrix.apply(lambda x: min(x[coord_x], x[coord_y])) * ratio       
         new_dist = new_dist.append(pd.Series([inf]))
@@ -141,9 +147,13 @@ class ClusterProblem(object):
 #            self.next_cluster_problem = next_cluster_problem
             self.next_cluster_problem = next_cluster_problem.step()
             return self
+<<<<<<< HEAD
 
             
             
+=======
+    
+>>>>>>> b56d4e0d6cd4e41294ea5764d80bb868dd0192a4
 #    def make_all(self):
 #        next_cluster_problem = self.step()
 #        if len(next_cluster_problem.cluster_content) != 1:
@@ -152,6 +162,7 @@ class ClusterProblem(object):
 #            self.next_cluster_problem = next_cluster_problem
 
 
+<<<<<<< HEAD
 #a = table_des_mots_2.sum()
 #a.sort(ascending = False)
 #a = a[27:]
@@ -160,6 +171,24 @@ class ClusterProblem(object):
 #distance_tab = distance_tab.loc[sel, sel]
 #distance_tab.dropna(how = 'all', axis = 0, inplace = True)
 #distance_tab.dropna(how = 'all', axis = 1, inplace = True)
+=======
+
+def get_level_temp(cluster_problem, nb):
+    a = cluster_problem
+    for i in range(nb):
+        a = a.next_cluster_problem
+    return a              
+
+
+#a = table_des_mots_2.sum()
+#a.sort(ascending = False)
+a = a[27:]
+sel = a.index[:1000]
+distance_tab_copy = distance_tab
+distance_tab = distance_tab.loc[sel, sel]
+distance_tab.dropna(how = 'all', axis = 0, inplace = True)
+distance_tab.dropna(how = 'all', axis = 1, inplace = True)
+>>>>>>> b56d4e0d6cd4e41294ea5764d80bb868dd0192a4
 
 
 #def main(args):

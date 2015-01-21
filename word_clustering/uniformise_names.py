@@ -73,6 +73,7 @@ for x in [0,1]:
     grp = total_tab.groupby('temp_col')
     total_tab = grp.sum()
 
+<<<<<<< HEAD
 total_tab.drop('', axis = 0, inplace = True)
 total_tab.drop('', axis = 1, inplace = True)
 
@@ -93,3 +94,17 @@ for i in distance_tab.index:
     distance_tab.loc[i, i] = inf
     
 distance_tab = distance_tab.replace(inf, 4 * distance_tab[distance_tab != inf].max().max())
+=======
+a = total_tab.sum()
+a.sort(ascending = False)
+    
+### TOMORROW : RUN BELOW >>>>>
+
+
+    
+#table_des_mots.to_csv('table_des_mots_2_clean.csv', sep = ';')
+
+
+
+#table_des_mots_2 = a.copy()
+>>>>>>> b56d4e0d6cd4e41294ea5764d80bb868dd0192a4
