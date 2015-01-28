@@ -13,8 +13,8 @@ from os.path import isfile, join
 from datetime import datetime
 
 inf = np.inf
-#path = '/home/debian/Documents/data/foot'
-path = 'C:\\Users\\work\\Documents\\ETALAB_data\\soccer'
+path = '/home/debian/Documents/data/foot'
+#path = 'C:\\Users\\work\\Documents\\ETALAB_data\\soccer'
 
 def load_table(path):
     all_tab_names = [f for f in listdir(path) if isfile(join(path,f)) if '.csv' in f]
@@ -58,6 +58,7 @@ def make_table_team(table):
 
 
 def make_stats_table(table_team, five = 10):
+    
     table_team.sort('date', inplace = True)    
     table_team['index'] = list(table_team.index)
     grp = table_team.groupby('team')
@@ -97,25 +98,36 @@ def make_stats_table(table_team, five = 10):
 def make_global_table(table):
     
     [table_team, table_team_h, table_team_a] = make_table_team(table)
-#    table_team_h.columns = ['when_home_' + col for col in table_team_h.columns]
-#    table_team_h.columns = ['when_away_' + col for col in table_team_h.columns]
+    table_team_h.columns = ['when_home_' + col for col in table_team_h.columns]
+    table_team_a.columns = ['when_away_' + col for col in table_team_a.columns]
+
+    all_predictors = []
+    for (tab_team, five) in [(table_team, 20), (table_team_h, 10), (table_team_a, 10)]:
+        prefix = ''
+        if 'when_away' in tab_team.columns[0]:
+            prefix = 'when_away_'
+        elif 'when_home' in tab_team.columns[0]:
+            prefix = 'when_home_'
+        tab_team.columns = [x.replace(prefix, '') for x in list(tab_team.columns)]
+        
+        tab_team = make_stats_table(tab_team, five)
+        tab_team.columns = [prefix + x for x in list(tab_team.columns)]        
+        
+        columns = tab_team.columns
+        columns_h = ['h_' + x for x in list(columns)]
+        columns_a = ['a_' + x for x in list(columns)]
     
-    table_team = make_stats_table(table_team)
-    columns = table_team.columns
-    columns_h = ['h_' + x for x in list(columns)]
-    columns_a = ['a_' + x for x in list(columns)]
-    
-    
-    table_team.columns = columns_h
-    table = table.merge(table_team, left_on = ['hometeam', 'date'], right_on = ['h_team', 'h_date'])
-    table_team.columns = columns_a
-    table = table.merge(table_team, left_on = ['awayteam', 'date'], right_on = ['a_team', 'a_date'])
-    
-    predictors = columns[10:]
-    
-    for col in predictors:
-        table[col] = table['h_' + col].apply(float) / table['a_' + col].apply(float)
-    return [table, predictors]
+        tab_team.columns = columns_h
+        table = table.merge(tab_team, left_on = ['hometeam', 'date'], right_on = ['h_' + prefix + 'team', 'h_' + prefix + 'date'], how = 'outer')
+        tab_team.columns = columns_a
+        table = table.merge(tab_team, left_on = ['awayteam', 'date'], right_on = ['a_' + prefix + 'team', 'a_' + prefix + 'date'], how = 'outer')
+        
+        
+        predictors = columns[10:]
+        for col in predictors:
+            table[col] = table['h_' + col].apply(float) / table['a_' + col].apply(float)
+        all_predictors = all_predictors + list(predictors)
+    return [table, all_predictors]
     
     
 table = load_table(path)
@@ -128,11 +140,12 @@ table['ftr_num'] = 0
 table.loc[table.ftr == 'D', 'ftr_num'] = 1
 table.loc[table.ftr == 'A', 'ftr_num'] = 2
 
-table[predictors] = table[predictors] * 1000
+table[predictors] = table[predictors] * 10
 table[predictors] = table[predictors].applymap(round)
 
-train = table.iloc[:1700]
-test = table.iloc[1700:]
+train_len = round(len(table) *0.7)
+train = table.iloc[:train_len]
+test = table.iloc[train_len:]
 
 ################
 from sklearn.ensemble import RandomForestClassifier
