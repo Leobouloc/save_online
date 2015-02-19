@@ -131,52 +131,60 @@ def make_global_table(table):
     
     
 table = load_table(path)
-[table, predictors] = make_global_table(table)
 
-predictors = [u'ftg_last_five', u'win_last_five', u'draw_last_five', u'ftg_per_match', u'num_matchs_in_last_2_weeks']
-sel = table[predictors].apply(lambda x: (x.notnull().all() & (x != np.inf).all()) & (x != inf).all(), axis = 1)
-table= table[sel]
-table['ftr_num'] = 0
-table.loc[table.ftr == 'D', 'ftr_num'] = 1
-table.loc[table.ftr == 'A', 'ftr_num'] = 2
-
-table[predictors] = table[predictors] * 10
-table[predictors] = table[predictors].applymap(round)
-
-train_len = round(len(table) *0.7)
-train = table.iloc[:train_len]
-test = table.iloc[train_len:]
-
-################
-from sklearn.ensemble import RandomForestClassifier
-forest = RandomForestClassifier(n_estimators = 100, min_samples_split = 4, min_samples_leaf = 2)
-
-def test_func(x):
-    try:
-        return int(min(val, 10000))
-    except:
-        print val > 10
-        print val
-        print type(val)
-
-to_predict = 'ftr'
-X = []
-for i in train.index:
-    X += [[int(min(abs(val), 10000)) for val in list(train[predictors].loc[i])]]
-y = list(train[to_predict])
-forest.fit(X, y)
-
-X = []
-for i in test.index:
-    X += [[int(min(abs(val), 10000)) for val in list(test[predictors].loc[i])]]
-test['prediction'] = forest.predict(X)
-print 'Proportion bien predite', (test.prediction == test.ftr).sum() / float(len(test))
-test[['hometeam', 'awayteam'] + predictors + ['prediction'] + ['ftr']]
-
-################
-
-
-
-
-
-#make_forest(train[predictors + ['ftr_num']], 'ftr_num', predictors)
+do = False
+if do:
+    [table, predictors] = make_global_table(table)
+    
+    predictors = [u'ftg_last_five', u'win_last_five', u'draw_last_five', u'ftg_per_match', u'num_matchs_in_last_2_weeks']
+    sel = table[predictors].apply(lambda x: (x.notnull().all() & (x != np.inf).all()) & (x != inf).all(), axis = 1)
+    table= table[sel]
+    table['ftr_num'] = 0
+    table.loc[table.ftr == 'D', 'ftr_num'] = 1
+    table.loc[table.ftr == 'A', 'ftr_num'] = 2
+    
+    table[predictors] = table[predictors] * 10
+    table[predictors] = table[predictors].applymap(round)
+    
+    train_len = round(len(table) *0.7)
+    train = table.iloc[:train_len]
+    test = table.iloc[train_len:]
+    
+    ################
+    from sklearn.ensemble import RandomForestClassifier
+    forest = RandomForestClassifier(n_estimators = 100, min_samples_split = 4, min_samples_leaf = 2)
+    
+    def test_func(x):
+        try:
+            return int(min(val, 10000))
+        except:
+            print val > 10
+            print val
+            print type(val)
+    
+    to_predict = 'ftr'
+    X = []
+    for i in train.index:
+        X += [[int(min(abs(val), 10000)) for val in list(train[predictors].loc[i])]]
+    y = list(train[to_predict])
+    forest.fit(X, y)
+    
+    X = []
+    for i in test.index:
+        X += [[int(min(abs(val), 10000)) for val in list(test[predictors].loc[i])]]
+    test['prediction'] = forest.predict(X)
+    print 'Proportion bien predite', (test.prediction == test.ftr).sum() / float(len(test))
+    test[['hometeam', 'awayteam'] + predictors + ['prediction'] + ['ftr']]
+    
+    ################
+    
+    h_rate = 2648 / 5991.0
+    d_rate = 1787 / 5991.0
+    a_rate = 1556 / 5991.0
+    table['pred'] = table.apply(lambda x: argmax([x.whh * h_rate, x.whd * d_rate, x.wha * a_rate,]), axis = 1)
+    replace_dict = {0:'H', 1:'D', 2:'A'}
+    table['gain_potentiel'] = table.apply(lambda x: x['wh' + replace_dict[x.pred].lower()], axis = 1)
+    sel = table.pred.apply(lambda x: replace_dict[x]) == table.ftr
+    
+    
+    #make_forest(train[predictors + ['ftr_num']], 'ftr_num', predictors)

@@ -15,7 +15,193 @@ import itertools
 
 from sklearn.ensemble import RandomForestClassifier
 
+
+
+
+
+
+
+tab_string = '''cp	montant_attribue
+67000	89983593
+67000	108526
+67000	29373
+67000	602000
+67000	1454267
+67000	264000
+67000	855854
+67000	3182861
+67000	4101
+67000	570488
+67000	4235373
+67000	13462450
+67000	133850
+67000	1075332
+67000	2280524
+67000	1368500
+67000	60000
+67000	3490054
+67000	718100
+67000	387191
+67000	817894
+67000	29120
+67000	6872
+67000	50000
+67000	109487
+67000	680000
+67000	20728000
+67000	1594178
+67000	212350
+67000	101878
+67000	821685
+67000	3617905
+67000	489994
+67000	168000
+67000	23733
+67100	181425275
+67110	10890593
+67114	23401898
+67115	217525
+67116	12913238
+67117	1736819
+67118	29608701
+67360	203967
+67120	30824778
+67120	7174
+67120	3936156
+67120	3399706
+67130	7355801
+67130	77229
+67140	4905545
+67150	27576922
+67150	24393107
+67160	7200
+67170	21192243
+67170	5690007
+67170	120000
+67170	246466
+67190	2542223
+67200	33418925
+67201	9562990
+67202	17008818
+67203	5750000
+67204	8216473
+67205	7136834
+67207	4188734
+67210	3626305
+67210	45038
+67220	3491545
+67210	523102
+67230	14877794
+67230	362925
+67240	4108295
+67240	128000
+67240	958197
+67250	311069
+67260	460089
+67260	15009
+67270	8332520
+67280	405688
+67290	7717392
+67300	137834772
+67300	27500
+67300	1848616
+67300	486774
+67300	9874
+67300	160000
+67310	9660519
+67310	285250
+67320	8720114
+67330	15175326
+67340	290822
+67350	1241138
+67360	298791
+67370	1724339
+67380	6692762
+67380	270189
+67390	6476982
+67400	21406182
+67400	2125341
+67400	3359305
+67400	2746661
+67400	1273679
+67400	538327
+67410	396051
+67400	48321198
+67400	2735848
+67420	148570
+67430	517901
+67440	596602
+67450	20591573
+67450	1079667
+67450	5938572
+67450	456472
+67460	4090885
+67470	1713322
+67480	84630
+67490	779194
+67500	5364045
+67500	5495834
+67500	181852
+67500	2560000
+67520	3945145
+67530	203626
+67540	77283415
+67540	1409791
+67540	2675300
+67550	1318124
+67560	3623861
+67580	140000
+67590	19286010
+67600	9407171
+67600	283282
+67600	318394
+67610	11354341
+67620	25459029
+67640	8204222
+67650	160226
+67670	11684279
+67680	2105503
+67700	6912199
+67700	4716
+67700	10203
+67710	1605753
+67720	12810339
+67720	204287
+67720	5411309
+67720	237203
+67720	3831728
+67720	14344
+67720	362600
+67730	972571
+67750	604752
+67760	1842000
+67770	2076969
+67790	2534895
+67800	83215120
+67800	8866
+67800	891327
+67810 13002429
+67380	82488
+67380	159000
+67840	5706511
+67380	8936
+67850	13126892
+67860	658114
+67870	14211097
+67880	5338731
+67920	10414
+67000	2041674
+67960	18589334
+67970	1433219
+67980	873275
+'''
+
+
+
+
 path = '/home/debian/Documents/data/strasbourg'
+path_pop = '/home/debian/Documents/data/villes'
+path_naf = '/home/debian/Documents/data/strasbourg/entreprises'
 file = os.path.join(path, 'CUS_CUS_ACP_MPUB.XLS')
 file2 = os.path.join(path, 'CUS_CUS_AMC_MPUB2.xls')
 file3 = os.path.join(path, 'CUS_CUS_AMC_STAMP2.xls')
@@ -42,6 +228,194 @@ def unify_type(table):
     return table
 
 ################################################
+
+
+correspondance_cp = '''
+cp_old	cp_new
+67000	67000
+67006	67000
+67007	67000
+67013	67000
+67015	67000
+67016	67000
+67017	67000
+67020	67000
+67021	67000
+67023	67000
+67025	67000
+67026	67000
+67027	67000
+67028	67000
+67029	67000
+67033	67000
+67034	67000
+67035	67000
+67036	67000
+67037	67000
+67038	67000
+67064	67000
+67067	67000
+67069	67000
+67070	67000
+67074	67000
+67080	67000
+67081	67000
+67082	67000
+67084	67000
+67085	67000
+67087	67000
+67088	67000
+67089	67000
+67091	67000
+67100	67100
+67110	67110
+67114	67114
+67115	67115
+67116	67116
+67117	67117
+67118	67118
+67119	67360
+67120	67120
+67121	67120
+67122	67120
+67129	67120
+67130	67130
+67131	67130
+67140	67140
+67150	67150
+67151	67150
+67160	67160
+67170	67170
+67171	67170
+67172	67170
+67173	67170
+67190	67190
+67200	67200
+67201	67201
+67202	67202
+67203	67203
+67204	67204
+67205	67205
+67207	67207
+67210	67210
+67215	67210
+67220	67220
+67222	67210
+67230	67230
+67235	67230
+67240	67240
+67242	67240
+67243	67240
+67250	67250
+67260	67260
+67269	67260
+67270	67270
+67280	67280
+67290	67290
+67300	67300
+67301	67300
+67302	67300
+67303	67300
+67305	67300
+67309	67300
+67310	67310
+67319	67310
+67320	67320
+67330	67330
+67340	67340
+67350	67350
+67360	67360
+67370	67370
+67380	67380
+67382	67380
+67390	67390
+67400	67400
+67401	67400
+67402	67400
+67403	67400
+67404	67400
+67405	67400
+67410	67410
+67411	67411
+67412	67412
+67420	67420
+67430	67430
+67440	67440
+67450	67450
+67451	67451
+67452	67452
+67454	67454
+67460	67460
+67470	67470
+67480	67480
+67490	67490
+67500	67500
+67501	67501
+67502	67502
+67503	67503
+67520	67520
+67530	67530
+67540	67540
+67541	67540
+67542	67540
+67550	67550
+67560	67560
+67580	67580
+67590	67590
+67600	67600
+67601	67601
+67603	67603
+67610	67610
+67620	67620
+67640	67640
+67650	67650
+67670	67670
+67680	67680
+67700	67700
+67701	67700
+67703	67700
+67710	67710
+67720	67720
+67722	67720
+67724	67720
+67725	67725
+67726	67720
+67727	67720
+67728	67720
+67730	67730
+67750	67750
+67760	67760
+67770	67770
+67790	67790
+67800	67800
+67802	67800
+67803	67800
+67810 67810
+67831	67380
+67836	67380
+67840	67840
+67843	67380
+67850	67850
+67860	67860
+67870	67870
+67880	67880
+67920	67920
+67953	67000
+67960	67960
+67970	67970
+67980	67980
+'''
+
+cp_cus = '''67800 67113 67201 67550 67960 67114 67640 67118 67800 67810 67400 67450
+            67380 67640 67206 67450 67207 67205 67203 67540 67115 67116 67300 67460
+            67000 67100 67200 67550 67610 67202 '''.split()
+
+corr_tab = string_to_dataframe(correspondance_cp, 2, True)
+
+new_cp_cus = []
+for x in cp_cus:
+    new_cp_cus = new_cp_cus + list(corr_tab.loc[corr_tab.cp_new == x, 'cp_old'])
+
 
 marches = pd.read_excel(file)
 marches.dropna(how='all', inplace=True)
@@ -85,6 +459,205 @@ test['ratio'] = test['avenants'].apply(float) / test['montant_attribue'].apply(f
 test['dep'] = np.nan
 test.loc[test.cp.notnull(), 'dep'] = test.loc[test.cp.notnull(), 'cp'].apply(lambda x: x[:2])
 toast = panda_merge(test, test['ratio'])
+
+
+
+# Industrie majoritaire par dep
+#a.groupby('dep')['industrie'].apply(lambda x: x.value_counts().index[0]).to_csv(os.path.join(path_naf, 'industrie_majoritaire_par_dep.csv'), sep = ';')
+
+
+
+
+
+
+
+# Pour les plots
+
+
+info_villes = pd.read_csv(os.path.join(path_pop, 'info_villes.csv'), sep = ';')
+table_pop = pd.DataFrame(info_villes.groupby('postal_code')['population'].sum())
+table_pop['cp'] = list(table_pop.index)
+
+marches_2['cp'] = marches_2.cp.apply(lambda x: str(x).zfill(5))
+marches_2 = marches_2.merge(table_pop, on = 'cp', how = 'outer')
+
+marches_2['montant_par_pop'] = marches_2.montant_attribue / marches_2.population
+
+marches_2.groupby('cp')['montant_par_pop'].sum().dropna().apply(int).to_csv(os.path.join(path, 'montant_par_pop_par_cp.csv'))
+marches_2['dep'] = marches_2.cp.str.slice(0,2)
+
+##### BLOC : AVENANTS
+### : Entreprises avec la plus grosse proportion d'avenants
+mmm = marches_2.groupby('attributaire').filter(lambda x: len(x) >= 5) # Entreprises avec + de 5 marches
+mmm = mmm[mmm.montant_attribue != 0]
+a = mmm.groupby('attributaire')['avenants'].sum() / marches_2.groupby('attributaire')['montant_attribue'].sum()
+a.sort()
+a.dropna()
+### : 
+mmm = mmm[mmm.montant_attribue != 0]  
+mmm['is_local'] = mmm.cp.isin(new_cp_cus)c = b.groupby('industrie').apply(lambda x: x.avenants.sum() / x.montant_attribue.sum()) * 100
+mmm.groupby(['is_local', 'type']).apply(lambda x: (x.avenants / x.montant_attribue).mean())
+
+mmm.groupby(['is_local', 'type']).apply(lambda x: x.montant_attribue.max())
+
+
+marches_2['is_local'] = marches_2.cp.isin(new_cp_cus)
+
+# Montant en bas-rhin par an
+marches_2.groupby('annee_initiale').apply(lambda x: x[x.cp.apply(lambda st: st[:2]) == '67']['montant_attribue'].sum() / x.montant_attribue.sum())
+
+marches_2.groupby(['type', 'annee_initiale']).apply(lambda x: x[x.cp.apply(lambda st: st[:2]) == '67']['montant_attribue'].sum() / x.montant_attribue.sum())
+marches_2['an_mois'] = marches_2.debut.apply(lambda x: int(str(x)[:7].replace('-', '').replace('NaT', '0')))
+
+table_entreprises = pd.DataFrame()
+for tab_name in ['first_batch.csv', 'second_batch.csv', 'third_batch.csv']:
+    tab = pd.read_csv(join(path_naf, tab_name), sep = ';')
+    table_entreprises = table_entreprises.append(tab)
+table_entreprises['siret'] = table_entreprises.siret.apply(str).str.strip(' ')
+marches_2['siret'] = marches_2.siret.apply(str).str.strip(' ')
+
+table_entreprises['code_naf_real'] = table_entreprises.code_naf.str.findall('\d{4}[A-Z]')
+table_entreprises.loc[table_entreprises.code_naf_real.apply(len) != 0, 'code_naf_real'] = table_entreprises.loc[table_entreprises.code_naf_real.apply(len) != 0,'code_naf_real'].apply(lambda x: x[0])
+table_entreprises.loc[table_entreprises.code_naf_real.apply(len) == 0, 'code_naf_real'] = np.nan
+table_entreprises['code_naf_small'] = np.nan
+table_entreprises.loc[table_entreprises.code_naf_real.notnull(), 'code_naf_small'] = table_entreprises.loc[table_entreprises.code_naf_real.notnull(), 'code_naf_real'].apply(lambda x: x[:2])
+
+def _recode_naf_small(x):
+    if x in range(0,4):
+        return 'A'
+    elif x in range(5, 10):
+        return 'B'
+    elif x in range(10, 34):
+        return 'C'
+    elif x == 35:
+        return 'D'
+    elif x in range(36, 40):
+        return 'E'
+    elif x in range(41, 44):
+        return 'F'
+    elif x in range(45, 48):
+        return 'G'
+    elif x in range(49, 54):
+        return 'H'
+    elif x in range(55, 57):
+        return 'I'
+    elif x in range(58, 64):
+        return 'J'
+    elif x in range(64, 67):
+        return 'K'
+    elif x == 68:
+        return 'L'
+    elif x in range(69, 76):
+        return 'M'
+    elif x in range(77, 83):
+        return 'N'
+    elif x == 84:
+        return 'O'
+    elif x == 85:
+        return 'P'
+    elif x in range(86, 89):
+        return 'Q'
+    elif x in range(90, 94):
+        return 'R'
+    elif x in range(94, 97):
+        return 'S'
+    elif x in range(97, 99):
+        return 'T'
+    elif x == 99:
+        return 'U'
+        
+        
+def _recode_naf_small(x):
+    if x in range(0,4):
+        return 'Agriculture Sylviculture Pêche;'
+    elif x in range(5, 10):
+        return 'Industries Extractives Agricoles Alimentaires;'
+    elif x in range(10, 34):
+        return 'Industries manufacturières;'
+    elif x == 35:
+        return 'Électricité gaz vapeur et air conditionné;'
+    elif x in range(36, 40):
+        return 'Production et distribution d eau assainissement gestion des déchets et dépollution;'
+    elif x in range(41, 44):
+        return 'Constructions et travaux de construction;'
+    elif x in range(45, 48):
+        return 'Commerce de gros et de détail réparation de véhicules automobiles et de motocycles;'
+    elif x in range(49, 54):
+        return 'Services de transport et d entreposage;'
+    elif x in range(55, 57):
+        return 'Services d hébergement et de restauration;'
+    elif x in range(58, 64):
+        return ' Services d information et de communication;'
+    elif x in range(64, 67):
+        return 'Services financiers et assurances;'
+    elif x == 68:
+        return 'Services immobiliers;'
+    elif x in range(69, 76):
+        return 'Services professionnels scientifiques et techniques;'
+    elif x in range(77, 83):
+        return 'Services administratifs et d assistance;'
+    elif x == 84:
+        return ' Services d administration publique et de défense services de sécurité sociale obligatoire;'
+    elif x == 85:
+        return 'Services de l éducation;'
+    elif x in range(86, 89):
+        return 'Services de santé et d action sociale;'
+    elif x in range(90, 94):
+        return 'Services artistiques et du spectacle et services récréatifs;'
+    elif x in range(94, 97):
+        return 'Autres services;'
+    elif x in range(97, 99):
+        return 'Services des ménages en tant qu employeurs;'
+    elif x == 99:
+        return 'Services extra-territoriaux;'
+
+a = marches_2.merge(table_entreprises[['siret', 'code_naf_small']], on = 'siret')
+a.loc[a.code_naf_small.notnull(), 'code_naf_small'] = a.loc[a.code_naf_small.notnull(), 'code_naf_small'].apply(int)
+a['industrie'] = a.code_naf_small.apply(_recode_naf_small)
+a['mini_naf'] = a.code_naf_small.str.slice(0,1)
+FFFF = a.groupby('mini_naf').apply(len)
+
+explode = (0.2,) * 10 # only "explode" the 2nd slice (i.e. 'Hogs')
+colors = ['blue'] * 10
+
+
+######################### Avenants par industries
+industries = a.groupby('industrie').size()
+industries.sort(ascending = False)
+huit_plus_grosses_industries = industries.iloc[:8]
+huit_plus_grosses_industries = list(huit_plus_grosses_industries.index)
+b = a[a['industrie'].isin(huit_plus_grosses_industries)]
+c = b.groupby('industrie').apply(lambda x: x.avenants.sum() / x.montant_attribue.sum()) * 100
+
+########################" SAISONALITE
+
+saisonalite = pd.DataFrame()
+marches_2 = marches_2.sort('debut')
+for x in ['Travaux', 'Services', 'Fournitures']:
+    a = marches_2[marches_2.type == x].groupby('an_mois')['montant_attribue'].sum()
+    if x == 'Travaux':
+        a = a.iloc[1:]
+    a.name = x
+    saisonalite = saisonalite.append(a)    
+#    p = plt.plot(a / a.mean())
+    
+    
+cmap = ('Qualitative',    ['Accent', 'Dark2', 'Paired', 'Pastel1', 'Pastel2', 'Set1', 'Set2', 'Set3'])    
+    
+#saisonalite = saisonalite.T
+#saisonalite.index = [str(x) for x in saisonalite.index]
+#plt.plot(saisonalite, lw = 3, colormap= 'Qualitative')
+#plt.xticks(range(len(saisonalite)), list(saisonalite.index), rotation = 45)
+#plt.legend(['Travaux', 'Services', 'Fournitures'])
+#
+#saisonnalite.plot(colormap = 'Accent', lw=3)
+#
+#plt.plot(saisonnalite, lw = 3, c = 'g')
+#plt.xticks([x for x in range(len(saisonnalite)) if x%2 == 0], [list(saisonnalite.index)[i] for i in range(len(saisonnalite)) if i%2 == 0], rotation = 45)
+#plt.ylabel('Montant en euros')
+#plt.xlabel('Annee-Mois de debut du marche')
+#plt.title('Effets de saisonnalite sur les debuts de marches')
+
 
 #toast.groupby('nb_lots')[0].apply(lambda x : ((x!=0) & (x.notnull())).sum())
 #
