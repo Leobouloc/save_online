@@ -11,7 +11,7 @@ https://www.data.gouv.fr/fr/datasets/l-impot-sur-le-revenu-par-collectivite-terr
 Le fichier créé a le même nom que celui d'origine mais avec l'extension .csv
 """
 
-import os
+from os.path import join
 import pandas as pd
 
 def load_ircom(path, file_name):
@@ -24,21 +24,24 @@ def load_ircom(path, file_name):
                 
     print '\nAttention, le chargement prend quelques minutes'
     table = pd.DataFrame(columns = column_names)
-    for i in range(0,101):
+    for i in range(111):
         try:
             print 'Chargement de la page', i
-            test = pd.read_excel(os.path.join(path, file_name),
+            test = pd.read_excel(join(path, file_name),
                                  i,
                                  skiprows = 23)
             test = test.iloc[:,1:]
             test.columns = column_names
             test['departement'] = test.departement.apply(lambda x: str(x).zfill(3))
             test['code_commune'] = test.departement.apply(lambda x: str(x).zfill(3))
+            if len(test) == 0:
+                print '   >>>  empty'
             table =  table.append(test, ignore_index = True)
         except:
-            print '  >>  Erreur dans le chargement de la tab', i
+            print '  >>  Erreur dans le chargement de la page', i
             pass
-    table.to_csv(file_name.replace('.xls', '.csv'))
+    table.to_csv(join(path, file_name.replace('.xls', '.csv')), index = False)
+    return table
     print 'Chargement terminé'
     
     
@@ -46,4 +49,4 @@ def load_ircom(path, file_name):
 if __name__ == '__main__':
     path = '/home/debian/Documents/data/villes' # Path du fichier .xls
     file_name = 'fichedescriptive_7270.xls' # Nom du fichier .xls
-    load_ircom(path, file_name)
+    table = load_ircom(path, file_name)
