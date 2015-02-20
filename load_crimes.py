@@ -170,6 +170,7 @@ def load_crimes_fr(to_load, path, file_name_police, file_name_gendarmerie, new_f
     big_tab['code_dep'] = big_tab.departement.apply(lambda x: deps[x])
     big_tab = big_tab[columns]
     big_tab.to_csv(join(path, new_file_name), index = False)
+    big_tab['dat'] = big_tab.dat.apply(lambda x: datetime.datetime.strptime(x, u'%d/%m/%Y'))
     print 'Le nouveau csv a été créé'
     return big_tab
 

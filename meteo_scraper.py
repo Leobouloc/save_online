@@ -52,26 +52,6 @@ def get_page(dep, integer, date, return_list = True):
     else:
         return valid_code
         
-        
-
-# START : Script pour trouver 10 villes dans chaque déparement
-#table = pd.DataFrame()
-#departements = range(1,95)
-#for dep in departements:
-#    print '----->', dep
-#    villes_trouvees = 0
-#    integer = 0
-#    while villes_trouvees < 10:
-#        a = get_page(dep, integer, date)
-#        integer +=1
-#        if not isinstance(a, bool):
-#            print a['ville']
-#            table = table.append(a, ignore_index = True)
-#            villes_trouvees += 1
-#table = table[['ville', 'dep', 'integer', 'date', 'temp_min', 'temp_max', 'ensoleillement', 'precipitations']]
-# END : Script pour trouver 10 villes dans chaque déparement
-
-    
 
 
 def initiate(path, num_cores):
@@ -83,34 +63,7 @@ def initiate(path, num_cores):
         f.write(table_index[-1] + '\n')
         f.close()
 
-#def get_all(path, liste_liste_des_dates, table_ref, indice):
-##    print 'Process', indice, 'has started'
-#    try:
-#        liste_des_dates = liste_liste_des_dates[indice]
-#        table_deja_faite = pd.read_csv(join(path, 'table_meteo_' + str(indice) + '.csv'), sep = ';')
-#        last_city = (table_deja_faite['integer'].iloc[-1], table_deja_faite['dep'].iloc[-1])
-#        f = open(join(path, 'table_meteo_' + str(indice) + '.csv'), 'a')
-#        all_int_dep = [x for x in zip(table_ref['integer'], table_ref['dep'])]
-#        for (integer, dep) in all_int_dep[all_int_dep.index(last_city):]:
-#            for date in liste_des_dates:
-#                for i in range(10):
-#                    try:
-#                        retour = get_page(dep, integer, date, return_list = True)
-#                        for col in retour[:-1]:
-#                            f.write(col + ';')
-#                        f.write(retour[-1] + '\n')
-#                        print retour
-#                        break
-#                    except Exception,e:
-#                        print dep, integer, date, 'was passed ...'
-#                        print '   >>>', e
-#                        time.sleep(30)
-#        'Process', indice, 'is finished'
-#    except:
-#        f.close()
-#        print 'Terminated process', indice,'before end. FILE CLOSED'
-        
-        
+
 def get_all_2(path, liste_a_faire, indice):
 #    print 'Process', indice, 'has started'
     try:
@@ -141,24 +94,6 @@ def get_all_2(path, liste_a_faire, indice):
         f.close()
         print 'Terminated process', indice,'before end. FILE CLOSED'
 
-#def get_all_for_pool(indice):
-#    path = 'C:\\Users\\work\\Documents\\ETALAB_data\\meteo'
-#    csv_name = 'meteo.csv'
-#    num_cores = cpu_count()
-#    
-#    # Preparation des dates
-#    base = datetime.datetime(2009, 1, 1)
-#    liste_des_dates = [base + datetime.timedelta(days=x) for x in range(0, 2200)]
-#    liste_des_dates = [date.strftime('%d-%m-%Y') for date in liste_des_dates]
-##    liste_des_dates = [str(jour) + '-' + str(mois) + '-' + str(annee) for annee in range(2009,2015) for mois in range(1,13) for jour in range(1,32)]
-#    len_for_threading = len(liste_des_dates) // num_cores
-#    liste_liste_des_dates = [liste_des_dates[i*len_for_threading:(i+1)*len_for_threading] for i in range(num_cores)]
-#    
-#    # Preparations des variables integer
-#    table_ref = pd.read_csv(join(path, 'table_ref.csv'), sep = ';')
-#    table_ref = table_ref.groupby('dep').apply(lambda x: x.iloc[0])
-#    get_all(path, liste_liste_des_dates, table_ref, indice)
-    
     
 def get_all_for_pool_2(indice):
 #    path = '/home/debian/Documents/data/meteo'
@@ -194,9 +129,11 @@ def load_global(path, num_cores):
     table['date'] = table.date.apply(lambda date: '-'.join([date.split('-')[0].zfill(2), date.split('-')[1].zfill(2), date.split('-')[2]]))
     return table
     
+    
+    
 if __name__ == '__main__':
-#    path = '/home/debian/Documents/data/meteo'
-    path = 'C:\\Users\\work\\Documents\\ETALAB_data\\meteo'
+    path = '/home/debian/Documents/data/meteo'
+#    path = 'C:\\Users\\work\\Documents\\ETALAB_data\\meteo'
     csv_name = 'meteo.csv'
     num_cores = cpu_count()
     
@@ -218,14 +155,14 @@ if __name__ == '__main__':
     a_faire =  table.groupby(['dep', 'integer'])['date'].apply(lambda x: [date for date in liste_des_dates if not(date in list(x))]).reset_index()
     a_faire_list = [(a_faire['integer'].iloc[i], a_faire['dep'].iloc[i], date) for i in range(len(a_faire)) for date in a_faire['date'].iloc[i]]
     print 'Il reste :', len(a_faire_list), 'lignes à faire'
-#    len_for_threading = len(a_faire_list) // num_cores
-#    liste_a_faire_list = [a_faire_list[i*len_for_threading:(i+1)*len_for_threading] for i in range(num_cores)]
-#    liste_liste_des_dates = [liste_des_dates[i*len_for_threading:(i+1)*len_for_threading] for i in range(num_cores)]
+    len_for_threading = len(a_faire_list) // num_cores
+    liste_a_faire_list = [a_faire_list[i*len_for_threading:(i+1)*len_for_threading] for i in range(num_cores)]
+    liste_liste_des_dates = [liste_des_dates[i*len_for_threading:(i+1)*len_for_threading] for i in range(num_cores)]
 
 #    # Preparations des variables integer
 
     
-###    initiate(path, num_cores)
-#    pool = Pool(processes = num_cores)
-#    pool.map(get_all_for_pool_2,range(num_cores))  
+##    initiate(path, num_cores)
+    pool = Pool(processes = num_cores)
+    pool.map(get_all_for_pool_2,range(num_cores))  
 
