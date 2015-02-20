@@ -13,7 +13,7 @@ Utilisation : modifiez le "path" ci dessous pour qu'ils correspondent à l'empla
 de stockage des fichiers de la gendarmerie ci dessous. Modifiez les noms (file_name...)
 si vous avez renommé ces fichiers.
 
-Le nouveau fichier portera le nom
+Le nouveau fichier portera le nom indiqué dans la variable : new_file_name
 """
 
 import pandas as pd
