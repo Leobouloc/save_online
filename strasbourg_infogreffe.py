@@ -1,10 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Oct 30 11:24:40 2014
+Created on Wed Feb  4 10:52:09 2015
 
-@author: work
+@author: debian
 """
-import hotels
+
+import os
+import numpy as np
+from time import sleep
+import pandas as pd
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
 
 def wait_until_found(selector, max_wait):
     wait = max_wait
@@ -48,7 +54,7 @@ def pas_de_res(denomination, localisation):
     else:
         return ''
   
-def retrieve_info(driver, denomination, localisation, adresse, une_boucle = None):
+def retrieve_info(driver, siret, une_boucle = None):
     max_wait = 10
     try:
         une_boucle += 1
@@ -56,45 +62,47 @@ def retrieve_info(driver, denomination, localisation, adresse, une_boucle = None
         une_boucle = 0
 
     driver.get("https://www.infogreffe.fr/societes/recherche-siret-entreprise/chercher-siret-entreprise.html")
-    elem = driver.find_element_by_id('p1_deno')
-    elem.send_keys(denomination)
-    elem = driver.find_element_by_id('localisation')
-    elem.send_keys(localisation)
-
+    elem = driver.find_element_by_id('p1_siren')
+    elem.send_keys(siret)
     elem.send_keys(Keys.RETURN)
-    
+
     wait = max_wait
     while wait != 0:
         try: ### Cas parfait
+            
             test = driver.find_element_by_id('colChiffresCles')
             test = test.find_element_by_css_selector('tbody')
-            test = test.find_elements_by_css_selector('td')
+            test = test.find_elements_by_css_selector('td') 
             wait = 0
             return_list = [test[i].text for i in range(len(test))]
-#            driver.close()
-            return (return_list)
+            code_naf = [[x.text for x in driver.find_elements_by_class_name('identTitreValeur') if '(CODE NAF)' in x.text][0]]
+            return (return_list, code_naf)
         except:
-            pass
+            try:
+                code_naf = [x.text for x in driver.find_elements_by_class_name('identTitreValeur') if '(CODE NAF)' in x.text][0]
+                return ([], code_naf)
+            except:
+                pass
         try: ### Pas de résultats : il faut décontraindre
             test = driver.find_element_by_id('aucunResultatEntrepriseTrouve')
-            return []
+            return ([], None)
         except:
             pass
         try: ### Trop de resultats : il faut  contraintdre
             print 'what'
             test = driver.find_element_by_id('resultatsTrouvesEntreprise')
-            return []
+            return ([], None)
 
         except: 
             sleep(0.5)
             wait -=0.5
+    return ([], None)
 
-    return([])
-    
-def make_table(info):
+
+def make_table(info_and_naf):
     '''Transformer la liste en Serie Panda + corrections en int'''
-    info = rewrite_list(info)
-    assert len(info)%4 == 0
+    info = rewrite_list(info_and_naf[0])
+    assert len(info)%4 in [0, 1]
     index = []
     values = []
     for i in range(len(info)//4):
@@ -127,6 +135,14 @@ def make_table(info):
         employes = info[4*k + 3]
         
         values = values + [CA, res, employes]
+    
+    try:
+        print info
+        code_naf = info_and_naf[1]
+    except:
+        code_naf = []
+    index = index + ['code_naf']
+    values = values + [code_naf]
     sortie = pd.Series(values, index = index)
     return sortie    
 
@@ -151,37 +167,80 @@ def rewrite_list(test):
 
 
 
-
 def scrap_infogreffe(driver, path, range_min = 0, range_max = 5):
     
-    file = os.path.join(path, 'hotels_scrap.csv')
-    hotels_scrap = pd.read_csv(file, sep=';', header = False) 
-    for i in hotels_scrap.index[range(range_min, range_max)]:
+    file = os.path.join(path, 'entreprise_scrap.csv')
+
+    entreprise_scrap = pd.read_csv(file, sep=';', header = False)
+
+    for i in entreprise_scrap.index[range(range_min, range_max)]:
         if i%50 == 0:
             print i
         #Si on n'a pas déjà rempli cette ligne, on la remplit
-        if not hotels_scrap.iloc[i].loc['checked']:
+        if not entreprise_scrap.iloc[i].loc['checked']:
             print i
-            denomination = hotels_scrap['NOM'].iloc[i]
-            localisation = hotels_scrap['COMMUNE'].iloc[i]
-            adresse = hotels_scrap['ADRESSE'].iloc[i]
+            siret = entreprise_scrap['siret'].iloc[i]
                         
-            info = retrieve_info(driver, denomination, localisation, adresse)
+            info = retrieve_info(driver, siret)
             ligne = make_table(info)
             try:
                 for col_name in ligne.index:
-                    if not col_name in hotels_scrap.columns:
-                        hotels_scrap[col_name] = None
-                    hotels_scrap.loc[i, col_name] = ligne[col_name]
+                    if not col_name in entreprise_scrap.columns:
+                        entreprise_scrap[col_name] = None
+                    entreprise_scrap.loc[i, col_name] = ligne[col_name]
             except:
                 pass
-            hotels_scrap['checked'].iloc[i] = True
-    hotels_scrap.to_csv(file, sep = ';', index=False)
-    return hotels_scrap
+            entreprise_scrap['checked'].iloc[i] = True
+    entreprise_scrap.to_csv(file, sep = ';', index=False)
+    return entreprise_scrap
 
 def scrap_machine_infogreffe(path):
-    driver = webdriver.Chrome()
+    driver = webdriver.Chrome(os.path.join(path, 'chromedriver'))
     '''Utilise la fonction scrap ci dessus avec des intervalles réguliers de sauvegarde '''
-    for i in range(1800, 3000):
+    for i in range(0, 60):
         scrap_infogreffe(driver, path, 5*i, 5*i+5)
     driver.close()
+    
+def scrap_infogreffe_for_pool(driver, path, indice):
+    
+    file = os.path.join(path, 'to_scrap_' + str(indice) + '.csv')
+
+    entreprise_scrap = pd.read_csv(file, sep=';', header = False)
+
+    for i in entreprise_scrap.index[range(len(entreprise_scrap))]:
+        if i%5 == 0:
+            entreprise_scrap.to_csv(file, sep = ';', index=False)
+        #Si on n'a pas déjà rempli cette ligne, on la remplit
+        if not entreprise_scrap.iloc[i].loc['checked']:
+            print i
+            siret = entreprise_scrap['siret'].iloc[i]
+                        
+            info = retrieve_info(driver, siret)
+            ligne = make_table(info)
+            try:
+                for col_name in ligne.index:
+                    if not col_name in entreprise_scrap.columns:
+                        entreprise_scrap[col_name] = None
+                    entreprise_scrap.loc[i, col_name] = ligne[col_name]
+            except:
+                pass
+            entreprise_scrap['checked'].iloc[i] = True
+    
+    return entreprise_scrap    
+    
+    
+def scrap_machine_infogreffe_for_pool(indice):
+    path = '/home/debian/Documents/data/strasbourg/entreprises'
+    driver = webdriver.Chrome(os.path.join(path, 'chromedriver'))
+    '''Utilise la fonction scrap ci dessus avec des intervalles réguliers de sauvegarde '''
+    scrap_infogreffe_for_pool(driver, path, indice)
+    driver.close()
+        
+    
+    
+    
+if __name__ == '__main__':
+    path = '/home/debian/Documents/data/strasbourg/entreprises'
+    from multiprocessing import Pool
+    pool = Pool(processes = 12)
+    pool.map(scrap_machine_infogreffe_for_pool,range(12))
